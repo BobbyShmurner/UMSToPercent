@@ -55,7 +55,7 @@ subject = subjects[choice - 1]
 print("\nUnit List:\n")
 for i in range(len(subject.units)):
 	unit = subject.units[i]
-	print(f"{i + 1}. {unit.name}")
+	print(f"{i + 1}. {unit.name} (Max UMS: {unit.maxUMS})")
 
 choice = int(input("Please pick a unit: "))
 unit = subject.units[choice - 1]
