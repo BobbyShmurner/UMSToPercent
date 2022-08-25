@@ -2,6 +2,9 @@ import json
 import math
 from dataclasses import dataclass
 
+UMS_LUT = [1, .8, .73, .67, .6, .5, .4, .3, .2]
+GRADE_LUT = ["A", "B", "C*", "C", "D", "E", "F", "G"]
+
 def Lerp (a, b, t):
 	return (a * (1.0 - t)) + (b * t);
 
@@ -11,7 +14,7 @@ def InverseLerp(a, b, x):
 @dataclass
 class Unit:
 	name: str
-	umsScores: list[int]
+	maxUMS: int
 	rawScores: list[int]
 
 @dataclass
@@ -29,7 +32,7 @@ for subjectJson in subjectsJson["Subjects"]:
 	for unitJson in subjectJson["Units"]:
 		unit = Unit(
 			unitJson["Unit"],
-			unitJson["UMS"],
+			unitJson["MaxUMS"],
 			unitJson["Raw"]
 		)
 
@@ -40,9 +43,6 @@ for subjectJson in subjectsJson["Subjects"]:
 		units
 	)
 	subjects.append(subject)
-
-lerpTime = InverseLerp(80, 100, 95)
-print(math.ceil(Lerp(61, 100, lerpTime)))
 
 print("Subject List:\n")
 for i in range(len(subjects)):
@@ -62,20 +62,29 @@ unit = subject.units[choice - 1]
 
 lowerBoundry = -1
 upperBoundry = -1
+lowerBoundryIndex = -1
 upperBoundryIndex = -1
+grade = "?"
 
 userUms = int(input("Please enter your UMS: "))
 
-for i in range(len(unit.umsScores)):
-	ums = unit.umsScores[i]
+for i in range(len(UMS_LUT)):
+	if (unit.rawScores[i] == -1): continue
+	ums = math.ceil(unit.maxUMS * UMS_LUT[i])
 
-	if userUms <= ums:
-		upperBoundry = unit.umsScores[i]
-		lowerBoundry = unit.umsScores[i - 1]
-		upperBoundryIndex = i
+	if userUms <= ums: continue
+	
+	upperBoundry = math.ceil(unit.maxUMS * UMS_LUT[i - 1])
+	lowerBoundry = ums
+	lowerBoundryIndex = i
+	upperBoundryIndex = i - 1
+
+	grade = GRADE_LUT[upperBoundryIndex]
+
+	break
 
 rawLerpTime = InverseLerp(lowerBoundry, upperBoundry, userUms)
-rawMark = math.ceil(Lerp(unit.rawScores[upperBoundryIndex - 1], unit.rawScores[upperBoundryIndex], rawLerpTime))
+rawMark = math.ceil(Lerp(unit.rawScores[lowerBoundryIndex], unit.rawScores[upperBoundryIndex], rawLerpTime))
 percent = math.ceil(rawMark / unit.rawScores[0] * 100)
 
-print(f"Raw Mark: {rawMark}/{unit.rawScores[0]}, Percent: {percent}")
+print(f"\nGrade: {grade}, Raw Mark: {rawMark}/{unit.rawScores[0]}, Percent: {percent}")
